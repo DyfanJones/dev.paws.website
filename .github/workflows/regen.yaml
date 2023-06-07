@@ -35,12 +35,6 @@ jobs:
         with:
           python-version: 3.x
 
-      - name: Install System Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libcurl4-openssl-dev libssl-dev libxml2-dev libgit2-dev
-          sudo apt-get install -y libharfbuzz-dev libfribidi-dev
-
       - name: Get requirements
         run: make requirements
 
@@ -48,23 +42,13 @@ jobs:
         run: |
           make update-deps
 
-      - name: Get Paws requirements
-        run: |
-          remotes::install_deps('vendor/paws/paws.common', dependencies = TRUE)
-          remotes::install_local('vendor/paws/paws.common', force = TRUE)
-        shell: Rscript {0}
+      - name: Clean Up
+        run:
+          make clean-down
 
       - name: Regen Paws Site
         run: |
           make regen-site
-
-      - name: Push to Website AWS S3
-        run:
-          aws s3 sync build/mkdocs/site ${{ secrets.S3FOLDER }} --delete --quiet
-
-      - name: Clean Up
-        run:
-          make clean-down
 
       # Commit all changed files back to the repository
       - uses: stefanzweifel/git-auto-commit-action@v4
