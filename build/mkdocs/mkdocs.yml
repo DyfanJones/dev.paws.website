@@ -1,0 +1,56 @@
+site_name: 'paws: 0.3.0'
+theme:
+  name: material
+  logo: logo.png
+  favicon: logo.png
+  font:
+    text: Roboto
+  palette:
+    - media: '(prefers-color-scheme: light)'
+      toggle:
+        icon: material/toggle-switch-off-outline
+        name: Switch to dark mode
+    - media: '(prefers-color-scheme: dark)'
+      scheme: slate
+      toggle:
+        icon: material/toggle-switch
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.top
+    - content.code.copy
+    - toc.follow
+markdown_extensions:
+  - footnotes
+  - toc:
+      baselevel: 1
+      toc_depth: 3
+  - pymdownx.highlight:
+      anchor_linenums: yes
+  - pymdownx.superfences
+repo_url: https://github.com/paws-r/paws
+repo_name: paws-r
+plugins:
+  - search
+extra_css:
+  - stylesheets/extra.css
+nav:
+  - Home: README.md
+  - Reference: docs/reference.md
+  - Articles:
+      - credentials: articles/credentials.md
+      - cheat_sheet: articles/cheat_sheet.pdf
+  - Examples:
+      - batch: examples/batch.md
+      - comprehend: examples/comprehend.md
+      - dynamodb: examples/dynamodb.md
+      - ec2: examples/ec2.md
+      - error_handling: examples/error_handling.md
+      - how_to_access_federated_api_using_saml2_and_adfs: examples/how_to_access_federated_api_using_saml2_and_adfs.md
+      - lambda: examples/lambda.md
+      - s3: examples/s3.md
+      - s3_multipart_upload: examples/s3_multipart_upload.md
+      - s3_select_object_content: examples/s3_select_object_content.md
+      - sns: examples/sns.md
+      - sqs: examples/sqs.md
+      - textract: examples/textract.md
