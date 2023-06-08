@@ -123,6 +123,65 @@ get_reference_md <- function(dir = "build/mkdocs/docs/docs") {
   writeLines(c("# Reference", knitr::kable(df, "html")), file.path(dir, "reference.md"))
 }
 
+make_hierarchy <- function(dir = "vendor/paws/cran") {
+  paws_desc <- fs::path(dir, "paws/DESCRIPTION")
+  lines <- readLines(paws_desc)
+  pkgs <- lines[grepl("paws\\.[a-z\\.]", lines, perl = T)]
+  paws_pkg <- trimws(gsub("\\([^)]*\\).*", "", pkgs))
+  
+  hierarchy <- unlist(lapply(paws_pkg, \(pkg) {
+    sprintf(
+      "https://dyfanjones.github.io/dev.%s/%s/",
+      pkg,
+      gsub("\\.Rd$", "", basename(fs::dir_ls(file.path(dir, pkg, "man"))))
+    )
+  }))
+  
+  
+  lvl <- gsub("_.*", "", basename(hierarchy))
+  ref <- sub("[a-zA-Z0-9]+_", "", basename(hierarchy), perl = T)
+  ref[lvl == ref] <- "Client"
+  
+  hierarchy <- sprintf("%s: %s", ref, hierarchy)
+  hierarchy <- split(hierarchy, lvl)
+  
+  # order hierarchy
+  for (j in seq_along(hierarchy)) {
+    idx <- grep("Client", hierarchy[[j]])
+    hierarchy[[j]] <- c(hierarchy[[j]][idx], sort(hierarchy[[j]][-idx]))
+  }
+  return(hierarchy)
+}
+
+
+
+
+paws_make_hierarchy <- function(paws_dir = "vendor/paws/cran") {
+  paws_desc <- fs::path(paws_dir, "/paws/DESCRIPTION")
+  lines <- readLines(paws_desc)
+  pkgs <- lines[grepl("paws\\.[a-z\\.]", lines, perl = T)]
+  paws_pkg <- trimws(gsub("\\([^)]*\\).*", "", pkgs))
+  
+  hierarchy <- sapply(paws_pkg, \(x) gsub("\\.Rd$", "\\.md", basename(fs::dir_ls(file.path(paws_dir, x, "man")))), simplify = F)
+  
+  for (i in seq_along(hierarchy)) {
+    lvl <- gsub("_.*|\\.md$", "", hierarchy[[i]])
+    ref <- sub("[a-zA-Z0-9]+_", "", hierarchy[[i]], perl = T)
+    ref <- gsub("\\.md$", "", ref)
+    
+    ref[lvl == ref] <- "Client"
+    hierarchy[[i]] <- sprintf("%s: docs/%s", ref, hierarchy[[i]])
+    hierarchy[[i]] <- split(hierarchy[[i]], lvl)
+    
+    # order hierarchy
+    for (j in seq_along(hierarchy[[i]])) {
+      idx <- grep("Client", hierarchy[[i]][[j]])
+      hierarchy[[i]][[j]] <- c(hierarchy[[i]][[j]][idx], sort(hierarchy[[i]][[j]][-idx]))
+    }
+  }
+  return(hierarchy)
+}
+
 build_site_yaml <- function() {
   site_yaml <- org_yaml <- yaml::yaml.load_file(
     "build/mkdocs.orig.yml"
@@ -135,6 +194,10 @@ build_site_yaml <- function() {
   }
 
   site_yaml$site_name <- sprintf("paws: %s", get_version())
+  
+  # add references
+  ref_idx <- which(vapply(site_yaml$nav, \(x) names(x) == "Reference", FUN.VALUE = logical(1)))
+  site_yaml$nav[[ref_idx]]$Reference <- make_hierarchy() # paws_make_hierarchy()
 
   # add articles
   ref_idx <- which(vapply(site_yaml$nav, \(x) names(x) == "Articles", FUN.VALUE = logical(1)))
@@ -148,7 +211,7 @@ build_site_yaml <- function() {
   site_yaml <- gsub("- '", "- ", site_yaml)
 
   # tidy up file paths
-  for (ext in c("md", "pdf")) {
+  for (ext in c("md", "pdf", "/")) {
     site_yaml <- gsub(
       sprintf("\\.%s'", ext),
       sprintf("\\.%s", ext),
